@@ -1,0 +1,7 @@
+//ファイル名をmyconfig.hに変更して反映
+
+// WiFI
+const char* ssid = "";
+const char* password = "";
+const char* address = "";
+
