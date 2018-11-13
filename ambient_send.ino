@@ -1,9 +1,7 @@
 #include <M5Stack.h>
 #include <WiFi.h>
-#include <HTTPClient.h>
 #define USE_ARDUINO_INTERRUPTS true
 #include <PulseSensorPlayground.h>
-#include <ArduinoJson.h>
 #include <math.h>
 #include <SparkFunMPU9250-DMP.h>
 
@@ -24,10 +22,6 @@ unsigned long pedLastStepCount = 0;
 
 
 
-
-
-HTTPClient http;
-
 int ibis[256];
 int gsrs[256];
 int pointer = 0;
@@ -36,7 +30,7 @@ void setup() {
     M5.begin();
     dacWrite(25, 0); // Speaker OFF
     Serial.begin(115200);
-    WiFi.begin(ssid, password);  //  Wi-Fi APに接続
+    WiFi.begin(ssid, password); // Wi-Fi APに接続
     while (WiFi.status() != WL_CONNECTED) {  //  Wi-Fi AP接続待ち
         delay(100);
     }
@@ -52,16 +46,15 @@ void setup() {
     if (!pulseSensor.begin()) {
         Serial.println("PulseSensor.begin: failed");
         for(;;) {
-            delay(0);
+            delay(100);
         }
     }
     if (imu.begin() != INV_SUCCESS) {
-        while (1)
-        {
-        Serial.println("Unable to communicate with MPU-9250");
-        Serial.println("Check connections, and try again.");
-        Serial.println();
-        delay(1000);
+        for(;;) {
+            Serial.println("Unable to communicate with MPU-9250");
+            Serial.println("Check connections, and try again.");
+            Serial.println();
+            delay(100);
         }
     }
     imu.dmpBegin(DMP_FEATURE_PEDOMETER);
@@ -101,14 +94,13 @@ int loopcount = 0;
 void loop() {
     delay(REDRAW);
     if (pulseSensor.sawStartOfBeat()) {            // Constantly test to see if "a beat happened". 
-      int ibi = pulseSensor.getInterBeatIntervalMs();
-      int gsr = analogRead(PIN_GSR);
-      //Serial.print("IBI: ");                        // Print phrase "BPM: " 
-      //Serial.println(ibi);                        // Print the value inside of myBPM. 
-      ibis[pointer] = ibi;
-      gsr = min(gsr, MAX_GSR); //センサーの最大値を超えたら最大値に固定
-      gsrs[pointer] = gsr;
-      pointer++;
+        int ibi = pulseSensor.getInterBeatIntervalMs();
+        int gsr = analogRead(PIN_GSR);
+
+        ibis[pointer] = ibi;
+        gsr = min(gsr, MAX_GSR); //センサーの最大値を超えたら最大値に固定
+        gsrs[pointer] = gsr;
+        pointer++;
     }
     int y = pulseSensor.getLatestSample();
     if (y < minS) minS = y;
@@ -131,90 +123,61 @@ void loop() {
         M5.Lcd.printf("BPM: %d", pulseSensor.getBeatsPerMinute());
     }
     if (++loopcount > PERIOD * 1000 / REDRAW) {
-      loopcount = 0;
-      int n = pointer;
-      pointer = 0;
-      //10拍も取れていないー＞計算をあきらめる
-      if(n < 10){
-          return;
-      }
-      
-
-      StaticJsonBuffer<200> jsonBuffer;
-      JsonObject& obj = jsonBuffer.createObject();
-      
-      
-      //RMSSD(RR間隔の差の自乗平均平方根)の計算
-      int diffCount = 0;
-      int sum = 0;
-      for(int i = 1;i < n; i++) {
-        int a = ibis[i-1];
-        int b = ibis[i];
-
-        //差が20%以下のみ使用　https://www.hrv4training.com/blog/issues-in-heart-rate-variability-hrv-analysis-motion-artifacts-ectopic-beats
-        if(a * 0.8 < b && a * 1.2 > b) {
-            int diff = b - a;
-            sum += diff * diff;
-            diffCount++;
+        loopcount = 0;
+        int n = pointer;
+        pointer = 0;
+        //10拍も取れていないー＞計算をあきらめる
+        if(n < 10){
+            return;
         }
-      }
-      double rmssd = sqrt(sum / diffCount);
+        
+        
+        //RMSSD(RR間隔の差の自乗平均平方根)の計算
+        int diffCount = 0;
+        int sum = 0;
+        for(int i = 1;i < n; i++) {
+            int a = ibis[i-1];
+            int b = ibis[i];
 
-      //RMSSDをvalenceに変換 (https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5624990/)
+            //差が20%以下のみ使用　https://www.hrv4training.com/blog/issues-in-heart-rate-variability-hrv-analysis-motion-artifacts-ectopic-beats
+            if(a * 0.8 < b && a * 1.2 > b) {
+                int diff = b - a;
+                sum += diff * diff;
+                diffCount++;
+            }
+        }
+        double rmssd = sqrt(sum / diffCount);
 
-      double valence = (rmssd-19) / (75-19) * 8 + 1;
-      obj["valence"] = valence;
+        //RMSSDをvalenceに変換 (https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5624990/)
 
-      //平均心拍数の計算
-      sum = 0;
-      for(int i = 0; i < n; i++) {
-          sum += ibis[i];
-      }
-      int avg = sum / n;
+        double valence = (rmssd-19) / (75-19) * 8 + 1;
 
-      double bpm = 60000.0 / avg;
-      obj["bpm"] = bpm;
+        //平均心拍数の計算
+        sum = 0;
+        for(int i = 0; i < n; i++) {
+            sum += ibis[i];
+        }
+        int avg = sum / n;
 
-      //平均GSRの計算
-      sum = 0;
-      for(int i = 0; i < n; i++) {
-          sum += gsrs[i];
-      }
-      double avg_gsr = (double)sum / n;
-      double cond = avg_gsr = ((2048-avg_gsr) * 100)/(4096+2*avg_gsr);//校正 uS
+        double bpm = 60000.0 / avg;
 
-      //For SCL, a range of 1-40uS has been mentioned (Venables & Christie, 1980)
-      if(cond > 40.0) {
-          cond = 40.0;
-      } 
+        //平均GSRの計算
+        sum = 0;
+        for(int i = 0; i < n; i++) {
+            sum += gsrs[i];
+        }
+        double avg_gsr = (double)sum / n;
+        double cond = avg_gsr = ((2048-avg_gsr) * 100)/(4096+2*avg_gsr);//校正 uS
 
-      double arousal = cond / 40 * 8 + 1;
-      obj["arousal"] = arousal;
-      
-      unsigned long pedStepCount = imu.dmpGetPedometerSteps();
-      unsigned long steps = pedStepCount - pedLastStepCount;
-      pedLastStepCount = pedStepCount;
+        //For SCL, a range of 1-40uS has been mentioned (Venables & Christie, 1980)
+        if(cond > 40.0) {
+            cond = 40.0;
+        } 
 
-      obj["steps"] = steps;
-
-
-
-      char output[256];
-      obj.printTo(output);
-      
-      http.begin(address);
-      http.addHeader("Content-Type", "application/json");
-      
-      int httpResponseCode = http.POST(output);
-      if(httpResponseCode>0){
-          String response = http.getString();  //Get the response to the request
-          Serial.println(httpResponseCode);   //Print return code
-          Serial.println(response);           //Print request answer
-      }else{
-          Serial.print("Error on sending POST: ");
-          Serial.println(httpResponseCode);
-      }
-            
-      http.end();
+        double arousal = cond / 40 * 8 + 1;
+        
+        unsigned long pedStepCount = imu.dmpGetPedometerSteps();
+        int steps = (int)(pedStepCount - pedLastStepCount);
+        pedLastStepCount = pedStepCount;
     }
 }
