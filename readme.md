@@ -1,6 +1,7 @@
 # M5_Sensor_Ambient   
 Ambientで可視化をする   
-参考: https://ambidata.io/samples/m5stack/m5stack_pulse_gps/
+参考: https://ambidata.io/samples/m5stack/m5stack_pulse_gps/   
+![スクリーンショット](https://github.com/tanopanta/image/blob/master/kenkyu/amb.png)
 ## 機能   
 (現在のところ)   
 1分毎に
