@@ -3,5 +3,7 @@
 // WiFI
 const char* ssid = "";
 const char* password = "";
-const char* address = "";
 
+// Ambient
+unsigned int channelId = 0; // AmbientのチャネルID
+const char* writeKey = "key"; // ライトキー

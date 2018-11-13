@@ -4,10 +4,9 @@
 #include <PulseSensorPlayground.h>
 #include <math.h>
 #include <SparkFunMPU9250-DMP.h>
+#include <Ambient.h>
 
 #include "myconfig.h"
-
-const int OUTPUT_TYPE = SERIAL_PLOTTER;
 
 const int PIN_INPUT = 36;
 const int THRESHOLD = 550;   // Adjust this number to avoid noise when idle
@@ -18,13 +17,12 @@ const int MAX_GSR = 2047;
 PulseSensorPlayground pulseSensor;
 MPU9250_DMP imu;
 
+WiFiClient client;
+Ambient ambient;
+
 unsigned long pedLastStepCount = 0;
 
 
-
-int ibis[256];
-int gsrs[256];
-int pointer = 0;
 void setup() {
     
     M5.begin();
@@ -37,6 +35,8 @@ void setup() {
 
     Serial.print("WiFi connected\r\nIP address: ");
     Serial.println(WiFi.localIP());
+
+    ambient.begin(channelId, writeKey, &client); 
 
     pulseSensor.analogInput(PIN_INPUT);
     //pulseSensor.setSerial(Serial);
@@ -90,6 +90,10 @@ short minS = 4096, maxS = 0;
 int lastY = 0;
 int x = 0;
 int loopcount = 0;
+
+int ibis[256];
+int gsrs[256];
+int pointer = 0;
 
 void loop() {
     delay(REDRAW);
@@ -179,5 +183,15 @@ void loop() {
         unsigned long pedStepCount = imu.dmpGetPedometerSteps();
         int steps = (int)(pedStepCount - pedLastStepCount);
         pedLastStepCount = pedStepCount;
+
+        ambient.set(1, bpm);
+        ambient.set(2, arousal);
+        ambient.set(3, valence);
+        ambient.set(4, steps);
+
+        // 9にlat 10にlngを指定
+        ambient.set(9, 35.801003);
+        ambient.set(10, 139.983351);
+        ambient.send();
     }
 }
