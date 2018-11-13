@@ -20,14 +20,11 @@ MPU9250_DMP imu;
 WiFiClient client;
 Ambient ambient;
 
-unsigned long pedLastStepCount = 0;
-
-
 void setup() {
-    
     M5.begin();
     dacWrite(25, 0); // Speaker OFF
     Serial.begin(115200);
+
     WiFi.begin(ssid, password); // Wi-Fi APに接続
     while (WiFi.status() != WL_CONNECTED) {  //  Wi-Fi AP接続待ち
         delay(100);
@@ -89,11 +86,14 @@ short lastMin = 0, lastMax = 4096;
 short minS = 4096, maxS = 0;
 int lastY = 0;
 int x = 0;
+
 int loopcount = 0;
 
 int ibis[256];
 int gsrs[256];
 int pointer = 0;
+
+unsigned long pedLastStepCount = 0;
 
 void loop() {
     delay(REDRAW);
@@ -106,6 +106,8 @@ void loop() {
         gsrs[pointer] = gsr;
         pointer++;
     }
+
+    //表示部はじめ---------------------------------------------
     int y = pulseSensor.getLatestSample();
     if (y < minS) minS = y;
     if (maxS < y) maxS = y;
@@ -126,6 +128,8 @@ void loop() {
         M5.Lcd.setTextSize(4);
         M5.Lcd.printf("BPM: %d", pulseSensor.getBeatsPerMinute());
     }
+    //表示部おわり---------------------------------------------
+    
     if (++loopcount > PERIOD * 1000 / REDRAW) {
         loopcount = 0;
         int n = pointer;
@@ -190,8 +194,8 @@ void loop() {
         ambient.set(4, steps);
 
         // 9にlat 10にlngを指定
-        ambient.set(9, 35.801003);
-        ambient.set(10, 139.983351);
+        ambient.set(9, 35.681167);
+        ambient.set(10, 139.767052);
         ambient.send();
     }
 }
