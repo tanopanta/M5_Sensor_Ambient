@@ -2,7 +2,6 @@
 #include <WiFi.h>
 #define USE_ARDUINO_INTERRUPTS true
 #include <PulseSensorPlayground.h>
-#include <math.h>
 #include <SparkFunMPU9250-DMP.h>
 #include <Ambient.h>
 
@@ -157,8 +156,14 @@ void loop() {
         double rmssd = sqrt(sum / diffCount);
 
         //RMSSDをvalenceに変換 (https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5624990/)
-
-        double valence = (rmssd-19) / (75-19) * 8 + 1;
+        //平均42,最大値75,最小値19を1～9に正規化
+        double valence = 0;
+        if(valence > 42) {
+            valence = (valence-42) / (75-42) / 2 + 0.5;
+        } else {
+            valence = (valence-19) / (42-19) / 2;
+        }
+        valence = valence * 8 + 1;
 
         //平均心拍数の計算
         sum = 0;
