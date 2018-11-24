@@ -1,11 +1,12 @@
 #include <M5Stack.h>
 #include <WiFi.h>
-#define USE_ARDUINO_INTERRUPTS true
-#include <PulseSensorPlayground.h>
+//#define USE_ARDUINO_INTERRUPTS true
+#include <MyPulseSensorPlayground.h>
 #include <SparkFunMPU9250-DMP.h>
 #include <Ambient.h>
 
 #include "myconfig.h"
+#include "wifiToGeo.h"
 
 const int PIN_INPUT = 36;
 const int THRESHOLD = 550;   // Adjust this number to avoid noise when idle
@@ -18,6 +19,27 @@ MPU9250_DMP imu;
 
 WiFiClient client;
 Ambient ambient;
+
+location_t loc;
+int steps = 0;
+
+//位置情報を定期的に更新するタスク
+void taskGeo(void * pvParameters) {
+    WifiGeo geo;
+    loc = geo.getGeoFromWifiAP(); // 初期位置取得
+    for(;;) {
+        // 10歩以上歩いていたら更新
+        if(steps > 10) {
+            location_t result = geo.getGeoFromWifiAP();
+            if(result.lng != 0.0 && result.lat != 0.0 && result.accuracy != 0.0) {
+                loc = geo.getGeoFromWifiAP();
+                Serial.printf("lat:%f, lng:%f, accuracy:%f\n", loc.lat, loc.lng, loc.accuracy);
+            }
+        }
+        delay(60000);
+    }
+}
+
 
 void setup() {
     M5.begin();
@@ -56,6 +78,16 @@ void setup() {
     imu.dmpBegin(DMP_FEATURE_PEDOMETER);
     imu.dmpSetPedometerSteps(0); // バッファを0で初期化
     imu.dmpSetPedometerTime(0);
+
+    // Task 1
+    xTaskCreatePinnedToCore(
+                    taskGeo,     /* Function to implement the task */
+                    "taskGeo",   /* Name of the task */
+                    8192,      /* Stack size in words */
+                    NULL,      /* Task input parameter */
+                    1,         /* Priority of the task */
+                    NULL,      /* Task handle. */
+                    0);        /* Core where the task should run */
 }
 
 const int LCD_WIDTH = 320;
@@ -79,6 +111,7 @@ void DrawGrid() {
     }
 }
 
+
 #define REDRAW 20 // msec
 #define PERIOD 60 // sec
 short lastMin = 0, lastMax = 4096;
@@ -91,6 +124,7 @@ int loopcount = 0;
 int ibis[256];
 int gsrs[256];
 int pointer = 0;
+
 
 unsigned long pedLastStepCount = 0;
 
@@ -159,9 +193,9 @@ void loop() {
         //平均42,最大値75,最小値19を1～9に正規化
         double valence = 0;
         if(valence > 42) {
-            valence = (valence-42) / (75-42) / 2 + 0.5;
+            valence = (rmssd-42) / (75-42) / 2 + 0.5;
         } else {
-            valence = (valence-19) / (42-19) / 2;
+            valence = (rmssd-19) / (42-19) / 2;
         }
         valence = valence * 8 + 1;
 
@@ -182,15 +216,10 @@ void loop() {
         double avg_gsr = (double)sum / n;
         double cond = avg_gsr = ((2048-avg_gsr) * 100)/(4096+2*avg_gsr);//校正 uS
 
-        //For SCL, a range of 1-40uS has been mentioned (Venables & Christie, 1980)
-        if(cond > 40.0) {
-            cond = 40.0;
-        } 
-
-        double arousal = cond / 40 * 8 + 1;
+        double arousal = cond / 50 * 8 + 1;
         
         unsigned long pedStepCount = imu.dmpGetPedometerSteps();
-        int steps = (int)(pedStepCount - pedLastStepCount);
+        steps = (int)(pedStepCount - pedLastStepCount);
         pedLastStepCount = pedStepCount;
 
         ambient.set(1, bpm);
@@ -198,9 +227,14 @@ void loop() {
         ambient.set(3, valence);
         ambient.set(4, steps);
 
+        // ambient.set(int, double)だと小数点以下第2位までしかおくれないため(int, char)をつかう
+        char latbuf[12], lngbuf[12];
+        dtostrf(loc.lat, 11, 7, latbuf);
+        dtostrf(loc.lng, 11, 7, lngbuf);
+
         // 9にlat 10にlngを指定
-        ambient.set(9, 35.681167);
-        ambient.set(10, 139.767052);
+        ambient.set(9, latbuf);
+        ambient.set(10, lngbuf);
         ambient.send();
     }
 }
