@@ -26,8 +26,10 @@ Ambientで可視化をする
     https://github.com/AmbientDataInc/Ambient_ESP8266_lib
     - PulseSensorPlayground.h   
     心拍数用ライブラリ
-    https://github.com/AmbientDataInc/PulseSensorPlayground  
+    https://github.com/tanopanta/MyPulseSensorPlayground  
     - SparkFunMPU9250-DMP.h   
     歩数計用ライブラリ   
     https://github.com/sparkfun/SparkFun_MPU-9250-DMP_Arduino_Library   
+    - Wi-Fi位置情報(wifiToGeo.h, wifiToGeo.cpp)   
+    https://github.com/tanopanta/M5Stack_WiFi_Geolocation
 1. ArduinoIDEでコンパイルし実行   
