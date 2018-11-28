@@ -214,7 +214,7 @@ void loop() {
             sum += gsrs[i];
         }
         double avg_gsr = (double)sum / n;
-        double cond = avg_gsr = ((2048-avg_gsr) * 100)/(4096+2*avg_gsr);//校正 uS
+        double cond = ((2048-avg_gsr) * 100)/(4096+2*avg_gsr);//校正 uS
 
         double arousal = cond / 50 * 8 + 1;
         
