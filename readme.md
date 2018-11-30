@@ -32,4 +32,5 @@ Ambientで可視化をする
     https://github.com/sparkfun/SparkFun_MPU-9250-DMP_Arduino_Library   
     - Wi-Fi位置情報(wifiToGeo.h, wifiToGeo.cpp)   
     https://github.com/tanopanta/M5Stack_WiFi_Geolocation
-1. ArduinoIDEでコンパイルし実行   
+1. ArduinoIDEでコンパイルし書き込み   
+1. 心拍センサを36番、GSRセンサを35番につないでM5Stackを起動
