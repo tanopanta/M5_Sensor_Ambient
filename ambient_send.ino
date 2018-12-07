@@ -5,6 +5,8 @@
 #include <SparkFunMPU9250-DMP.h>
 #include <Ambient.h>
 
+#include <drawPulse.h>
+
 #include "myconfig.h"
 #include "wifiToGeo.h"
 
@@ -19,6 +21,8 @@ MPU9250_DMP imu;
 
 WiFiClient client;
 Ambient ambient;
+
+DrawPulse drawPulse;
 
 // グローバルで位置情報を保持
 location_t loc;
@@ -55,6 +59,17 @@ void setup() {
     initPulseSensor();
     initImu();
 
+    drawPulse.init();
+
+    while(!M5.BtnA.wasReleased()) {
+        M5.update();
+        int y = analogRead(PIN_INPUT);
+        drawPulse.addValue(y);
+        drawPulse.showMsg("Push Button A to Start.");
+        delay(2);
+    }
+    M5.lcd.clear(BLACK);
+
     // 位置情報用タスクのセット
     xTaskCreatePinnedToCore(
                     taskGeo,     /* Function to implement the task */
@@ -66,34 +81,8 @@ void setup() {
                     0);        /* Core where the task should run */
 }
 
-const int LCD_WIDTH = 320;
-const int LCD_HEIGHT = 240;
-const int DOTS_DIV = 30;
-#define GREY 0x7BEF
-
-void DrawGrid() {
-    for (int x = 0; x <= LCD_WIDTH; x += 2) { // Horizontal Line
-        for (int y = 0; y <= LCD_HEIGHT; y += DOTS_DIV) {
-            M5.Lcd.drawPixel(x, y, GREY);
-        }
-        if (LCD_HEIGHT == 240) {
-            M5.Lcd.drawPixel(x, LCD_HEIGHT - 1, GREY);
-        }
-    }
-    for (int x = 0; x <= LCD_WIDTH; x += DOTS_DIV) { // Vertical Line
-        for (int y = 0; y <= LCD_HEIGHT; y += 2) {
-            M5.Lcd.drawPixel(x, y, GREY);
-        }
-    }
-}
-
-
 #define REDRAW 20 // msec
 #define PERIOD 60 // sec
-short lastMin = 0, lastMax = 4096;
-short minS = 4096, maxS = 0;
-int lastY = 0;
-int x = 0;
 
 int loopcount = 0;
 
@@ -114,30 +103,15 @@ void loop() {
         gsr = min(gsr, MAX_GSR); //センサーの最大値を超えたら最大値に固定
         gsrs[pointer] = gsr;
         pointer++;
+
+        M5.Lcd.setCursor(0, 0);
+        M5.Lcd.setTextSize(3);
+        M5.Lcd.printf("BPM: %03d", 60000 /ibi);
     }
 
-    //表示部はじめ---------------------------------------------
+    //波形表示
     int y = pulseSensor.getLatestSample();
-    if (y < minS) minS = y;
-    if (maxS < y) maxS = y;
-    if (x > 0) {
-        y = (int)(LCD_HEIGHT - (float)(y - lastMin) / (lastMax - lastMin) * LCD_HEIGHT);
-        M5.Lcd.drawLine(x - 1, lastY, x, y, WHITE);
-        lastY = y;
-    }
-    if (++x > LCD_WIDTH) {
-        x = 0;
-        M5.Lcd.fillScreen(BLACK);
-        DrawGrid();
-        lastMin = minS - 20;
-        lastMax = maxS + 20;
-        minS = 4096;
-        maxS = 0;
-        M5.Lcd.setCursor(0, 0);
-        M5.Lcd.setTextSize(4);
-        M5.Lcd.printf("BPM: %d", pulseSensor.getBeatsPerMinute());
-    }
-    //表示部おわり---------------------------------------------
+    drawPulse.addValue(y);
     
     if (++loopcount > PERIOD * 1000 / REDRAW) {
         loopcount = 0;
