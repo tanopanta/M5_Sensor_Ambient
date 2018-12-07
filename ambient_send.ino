@@ -66,7 +66,7 @@ void setup() {
         int y = analogRead(PIN_INPUT);
         drawPulse.addValue(y);
         drawPulse.showMsg("Push Button A to Start.");
-        delay(2);
+        delay(20);
     }
     M5.lcd.clear(BLACK);
 
