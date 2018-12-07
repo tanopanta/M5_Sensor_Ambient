@@ -61,15 +61,6 @@ void setup() {
 
     drawPulse.init();
 
-    while(!M5.BtnA.wasReleased()) {
-        M5.update();
-        int y = analogRead(PIN_INPUT);
-        drawPulse.addValue(y);
-        drawPulse.showMsg("Push Button A to Start.");
-        delay(20);
-    }
-    M5.lcd.clear(BLACK);
-
     // 位置情報用タスクのセット
     xTaskCreatePinnedToCore(
                     taskGeo,     /* Function to implement the task */
