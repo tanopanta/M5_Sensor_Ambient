@@ -128,7 +128,7 @@ void loop() {
                 diffCount++;
             }
         }
-        double rmssd = sqrt(sum / diffCount);
+        double rmssd = sqrt((double)sum / diffCount);
 
         //RMSSDをvalenceに変換 (https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5624990/)
         //平均42,最大値75,最小値19を1～9に正規化
