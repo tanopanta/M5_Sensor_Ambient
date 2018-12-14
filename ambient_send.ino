@@ -11,7 +11,7 @@
 #include "wifiToGeo.h"
 
 const int PIN_INPUT = 36;
-const int THRESHOLD = 550;   // Adjust this number to avoid noise when idle
+const int THRESHOLD = 2200;   // Adjust this number to avoid noise when idle
 
 const int PIN_GSR = 35;
 const int MAX_GSR = 2047;
@@ -50,7 +50,7 @@ void taskGeo(void * pvParameters) {
 void setup() {
     M5.begin();
     dacWrite(25, 0); // Speaker OFF
-    Serial.begin(115200);
+    //Serial.begin(115200);
 
     initWiFi();
 
