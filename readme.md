@@ -35,7 +35,7 @@ Ambientで可視化をする
     https://github.com/tanopanta/M5Stack_WiFi_Geolocation   
     - 波形描画ライブラリ   
     https://github.com/tanopanta/drawPulse   
-    - Jsonライブラリ   
+    - Jsonライブラリ(ArduinoJson)   
     Arduino IDEのライブラリマネージャーを利用しバージョン５系の最新版をインストール
 1. ArduinoIDEでコンパイルし書き込み   
 1. 心拍センサを36番、GSRセンサを35番につないでM5Stackを起動
