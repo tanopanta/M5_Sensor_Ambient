@@ -30,7 +30,12 @@ Ambientで可視化をする
     - SparkFunMPU9250-DMP.h   
     歩数計用ライブラリ   
     https://github.com/sparkfun/SparkFun_MPU-9250-DMP_Arduino_Library   
-    - Wi-Fi位置情報(wifiToGeo.h, wifiToGeo.cpp)   
-    https://github.com/tanopanta/M5Stack_WiFi_Geolocation
+    **＊インストール時に数か所変更するー＞** https://qiita.com/tanopanta/items/7ec96bf4801eddedac39   
+    - Wi-Fi位置測位(wifiToGeo.h, wifiToGeo.cpp)   
+    https://github.com/tanopanta/M5Stack_WiFi_Geolocation   
+    - 波形描画ライブラリ   
+    https://github.com/tanopanta/drawPulse   
+    - Jsonライブラリ   
+    Arduino IDEのライブラリマネージャーを利用しバージョン５系の最新版をインストール
 1. ArduinoIDEでコンパイルし書き込み   
 1. 心拍センサを36番、GSRセンサを35番につないでM5Stackを起動
