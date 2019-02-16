@@ -174,7 +174,7 @@ void loop() {
     }
 }
 
-
+// WiFiの起動
 void initWiFi() {
   Serial.println("Connecting to AP ...");
   // attempt to connect to WiFi network
@@ -186,7 +186,7 @@ void initWiFi() {
   }
   Serial.println("Connected to AP");
 }
-
+// 心拍センサ用クラスの準備
 void initPulseSensor() {
     pulseSensor.analogInput(PIN_INPUT);
     pulseSensor.setThreshold(THRESHOLD);
@@ -196,7 +196,7 @@ void initPulseSensor() {
         delay(500);
     }
 }
-
+// 歩数計機能の起動
 void initImu() {
     while(imu.begin() != INV_SUCCESS) {
         Serial.println("Unable to communicate with MPU-9250");
