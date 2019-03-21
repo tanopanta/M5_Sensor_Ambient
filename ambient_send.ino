@@ -7,9 +7,10 @@
 #include <Ambient.h>
 
 #include <drawPulse.h>
+#include <wifiGeo.h>
 
 #include "myconfig.h"
-#include "wifiGeo.h"
+
 
 const int PIN_INPUT = 36;
 const int THRESHOLD = 2200;   // Adjust this number to avoid noise when idle
