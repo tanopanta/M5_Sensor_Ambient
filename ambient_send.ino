@@ -1,5 +1,6 @@
 #include <M5Stack.h>
 #include <WiFi.h>
+#include <HTTPClient.h>
 
 #include <MyPulseSensorPlayground.h>
 #include <SparkFunMPU9250-DMP.h>
@@ -8,7 +9,7 @@
 #include <drawPulse.h>
 
 #include "myconfig.h"
-#include "wifiToGeo.h"
+#include "wifiGeo.h"
 
 const int PIN_INPUT = 36;
 const int THRESHOLD = 2200;   // Adjust this number to avoid noise when idle
@@ -22,6 +23,8 @@ MPU9250_DMP imu;
 WiFiClient client;
 Ambient ambient;
 
+
+
 DrawPulse drawPulse;
 
 // グローバルで位置情報を保持
@@ -31,7 +34,10 @@ int steps = 0;
 
 //位置情報を定期的に更新するタスク
 void taskGeo(void * pvParameters) {
+    HTTPClient httpClient;
     WifiGeo geo;
+    geo.beginAPI(&httpClient);
+
     loc = geo.getGeoFromWifiAP(); // 初期位置取得
     for(;;) {
         // 10歩以上歩いていたら更新

@@ -1,5 +1,5 @@
-# M5_Sensor_Ambient   
-Ambientで可視化をする   
+# Ambient Send   
+M5StackでとったセンサデータをAmbientで可視化する   
 参考: https://ambidata.io/samples/m5stack/m5stack_pulse_gps/   
    
 ## スクリーンショット
@@ -31,7 +31,7 @@ Ambientで可視化をする
     歩数計用ライブラリ   
     https://github.com/sparkfun/SparkFun_MPU-9250-DMP_Arduino_Library   
     **＊インストール時に数か所変更するー＞** https://qiita.com/tanopanta/items/7ec96bf4801eddedac39   
-    - Wi-Fi位置測位(wifiToGeo.h, wifiToGeo.cpp)   
+    - Wi-Fi位置測位用ライブラリ   
     https://github.com/tanopanta/M5Stack_WiFi_Geolocation   
     - 波形描画ライブラリ   
     https://github.com/tanopanta/drawPulse   
